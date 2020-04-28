@@ -21,7 +21,7 @@ def log_likelihood_bernoulli(mu, target):
     target = target.view(batch_size, -1)
 
     # log_likelihood_bernoulli
-    log_bernoulli = torch.sum(target * torch.log(mu) + (1. - target) * torch.log(1. - mu), 1)
+    log_bernoulli = torch.sum(target * torch.log(mu) + (1. - target) * torch.log(1. - mu), dim=1)
     return log_bernoulli
 
 
@@ -42,7 +42,7 @@ def log_likelihood_normal(mu, logvar, z):
 
     # log normal
     variance = torch.exp(logvar)
-    log_normal = torch.sum(-0.5 * torch.log(2 * math.pi * variance) - torch.pow(z - mu, 2) / (2 * variance), 1)
+    log_normal = torch.sum(-0.5 * torch.log(2 * math.pi * variance) - torch.pow(z - mu, 2) / (2 * variance), dim=1)
     return log_normal
 
 
@@ -60,7 +60,7 @@ def log_mean_exp(y):
     # log_mean_exp
     max_sample = torch.max(y, dim=1)[0]
     reshaped_max_sample = max_sample.view(batch_size, -1)
-    log_mean_exp = torch.log(torch.mean(torch.exp(y - reshaped_max_sample), 1)) + max_sample
+    log_mean_exp = torch.log(torch.mean(torch.exp(y - reshaped_max_sample), dim=1)) + max_sample
     return log_mean_exp
 
 
@@ -87,10 +87,10 @@ def kl_gaussian_gaussian_analytic(mu_q, logvar_q, mu_p, logvar_p):
     cov_p = torch.exp(logvar_p)
     cov_p_inverse = 1 / cov_p
     mu_diff = mu_p - mu_q
-    log_det_cov_p = torch.sum(logvar_p, 1)
-    log_det_cov_q = torch.sum(logvar_q, 1)
-    trace_det = torch.sum(cov_p_inverse * cov_q, 1)
-    fourth_term = torch.sum(mu_diff * cov_p_inverse * mu_diff, 1)
+    log_det_cov_p = torch.sum(logvar_p, dim=1)
+    log_det_cov_q = torch.sum(logvar_q, dim=1)
+    trace_det = torch.sum(cov_p_inverse * cov_q, dim=1)
+    fourth_term = torch.sum(mu_diff * cov_p_inverse * mu_diff, dim=1)
     kl_div = 0.5 * (log_det_cov_p - log_det_cov_q - input_size + trace_det + fourth_term)
     return kl_div
 
@@ -124,4 +124,3 @@ def kl_gaussian_gaussian_mc(mu_q, logvar_q, mu_p, logvar_p, num_samples=1):
     p_z = p_dist.log_prob(z)
     kld = torch.mean(q_z - p_z, dim=(1, 2))
     return kld
-    
